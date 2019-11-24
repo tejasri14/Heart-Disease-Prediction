@@ -1,0 +1,158 @@
+import pandas as pd
+import numpy as np
+import seaborn as sn
+import scipy.stats as st
+import matplotlib.pyplot as plt
+from sklearn.feature_selection import RFE
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.svm import SVC  
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.linear_model import LogisticRegression
+from sklearn import metrics
+from sklearn.model_selection import train_test_split
+import statsmodels.api as sm
+import sklearn
+pip install imblearn
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import confusion_matrix
+from sklearn.preprocessing import binarize
+
+data=pd.read_csv("C://Users/Tejasri/Desktop/framingham.csv")
+
+data["cigsPerDay"]=data["cigsPerDay"].replace("NA",data["cigsPerDay"].mean())
+data["education"]=data["education"].replace("NA",data["education"].mean())
+
+data["sysBP"]=data["sysBP"].astype(int)
+data["diaBP"]=data["diaBP"].astype(int)
+
+data["1hyper"]=np.where(((data["sysBP"]<160) & (data["sysBP"]>=140)) & ((data["diaBP"]<100) & (data["diaBP"]>=90)),1,0)
+
+data["2hyper"]=np.where((data["sysBP"]>=160) & (data["diaBP"]>=100),1,0)
+
+data.fillna(0,inplace=True)
+
+from sklearn.preprocessing import MinMaxScaler
+scaler=MinMaxScaler()
+data[["age"]]=scaler.fit_transform(data[["age"]])
+
+data[["totChol"]]=scaler.fit_transform(data[["totChol"]])
+
+data[["BMI"]]=scaler.fit_transform(data[["BMI"]])
+
+data[["heartRate"]]=scaler.fit_transform(data[["heartRate"]])
+
+data[["glucose"]]=scaler.fit_transform(data[["glucose"]])
+
+data[["cigsPerDay"]]=scaler.fit_transform(data[["cigsPerDay"]])
+
+data[["sysBP"]]=scaler.fit_transform(data[["sysBP"]])
+
+data[["diaBP"]]=scaler.fit_transform(data[["diaBP"]])
+
+data[["totChol"]]=scaler.fit_transform(data[["totChol"]])
+
+data["constant"]=1
+
+X = data.iloc[:,[0,1,2,3,6,10,11,12,14,16,17]]
+y=data.loc[:,data.columns=="TenYearCHD"]
+regressor_OLS = sm.OLS(endog = y, exog = X).fit()
+regressor_OLS.summary()
+
+cols=data.columns[:-1]
+
+logreg = LogisticRegression()
+
+data.TenYearCHD.value_counts()
+
+model = ExtraTreesClassifier()
+model.fit(X, y)
+print(model.feature_importances_)
+
+smt = SMOTE()
+X, y = smt.fit_sample(X, y)
+
+np.bincount(y)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+logreg.fit(X_train, y_train)
+
+y_pred=logreg.predict(X_test)
+
+cm=confusion_matrix(y_test,y_pred)
+conf_matrix=pd.DataFrame(data=cm,columns=['Predicted:0','Predicted:1'],index=['Actual:0','Actual:1'])
+plt.figure(figsize = (8,5))
+sn.heatmap(conf_matrix, annot=True,fmt='d',cmap="YlGnBu")
+
+TN=cm[0,0]
+TP=cm[1,1]
+FN=cm[1,0]
+FP=cm[0,1]
+sensitivity=TP/float(TP+FN)
+specificity=TN/float(TN+FP)
+print('The acuuracy of the model = TP+TN/(TP+TN+FP+FN) = ',(TP+TN)/float(TP+TN+FP+FN),'\n',
+
+'The Missclassification = 1-Accuracy = ',1-((TP+TN)/float(TP+TN+FP+FN)),'\n',
+
+'Sensitivity or True Positive Rate = TP/(TP+FN) = ',TP/float(TP+FN),'\n',
+
+'Specificity or True Negative Rate = TN/(TN+FP) = ',TN/float(TN+FP),'\n',
+
+'Positive Predictive value = TP/(TP+FP) = ',TP/float(TP+FP),'\n',
+
+'Negative predictive Value = TN/(TN+FN) = ',TN/float(TN+FN),'\n',
+
+'Positive Likelihood Ratio = Sensitivity/(1-Specificity) = ',sensitivity/(1-specificity),'\n',
+
+'Negative likelihood Ratio = (1-Sensitivity)/Specificity = ',(1-sensitivity)/specificity)
+
+svclassifier = SVC(kernel='linear',C=200)
+                   #degree=4)
+svclassifier.fit(X_train, y_train) 
+y_pred = svclassifier.predict(X_test)
+
+cm=confusion_matrix(y_test,y_pred)
+conf_matrix=pd.DataFrame(data=cm,columns=['Predicted:0','Predicted:1'],index=['Actual:0','Actual:1'])
+plt.figure(figsize = (8,5))
+sn.heatmap(conf_matrix, annot=True,fmt='d',cmap="YlGnBu") 
+print(classification_report(y_test,y_pred))  
+
+TN=cm[0,0]
+TP=cm[1,1]
+FN=cm[1,0]
+FP=cm[0,1]
+sensitivity=TP/float(TP+FN)
+specificity=TN/float(TN+FP)
+print('The acuuracy of the model = TP+TN/(TP+TN+FP+FN) = ',(TP+TN)/float(TP+TN+FP+FN)*100,'\n',
+
+'The Missclassification = 1-Accuracy = ',1-((TP+TN)/float(TP+TN+FP+FN)),'\n',
+
+'Sensitivity or True Positive Rate = TP/(TP+FN) = ',TP/float(TP+FN),'\n',
+
+'Specificity or True Negative Rate = TN/(TN+FP) = ',TN/float(TN+FP),'\n',
+
+'Positive Predictive value = TP/(TP+FP) = ',TP/float(TP+FP),'\n',
+
+'Negative predictive Value = TN/(TN+FN) = ',TN/float(TN+FN),'\n',
+
+'Positive Likelihood Ratio = Sensitivity/(1-Specificity) = ',sensitivity/(1-specificity),'\n',
+
+'Negative likelihood Ratio = (1-Sensitivity)/Specificity = ',(1-sensitivity)/specificity)
+
+y_pred_prob=logreg.predict_proba(X_test)[:,:]
+y_pred_prob_df=pd.DataFrame(data=y_pred_prob, columns=['Prob of no heart disease (0)','Prob of Heart Disease (1)'])
+y_pred_prob_df.head()
+
+for i in range(1,11):
+    cm2=0
+    y_pred_prob_yes=logreg.predict_proba(X_test)
+    y_pred2=binarize(y_pred_prob_yes,i/10)[:,1]
+    cm2=confusion_matrix(y_test,y_pred2)
+    print ('With',i/10,'threshold the Confusion Matrix is ','\n',cm2,'\n',
+            'with',cm2[0,0]+cm2[1,1],'correct predictions and',cm2[1,0],'Type II errors( False Negatives)','\n\n',
+          'Sensitivity: ',cm2[1,1]/(float(cm2[1,1]+cm2[1,0])),'Specificity: ',cm2[0,0]/(float(cm2[0,0]+cm2[0,1])),'\n\n\n','Accuracy:',(cm2[1,1]+cm2[0,0])/float(cm2[1,1]+cm2[1,0]+cm2[0,1]+cm2[0,1])*100)
+    
+
+
+
+
