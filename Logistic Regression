@@ -1,0 +1,43 @@
+import pandas as pd
+import numpy as np
+
+data=pd.read_csv("C:/Users/Tejasri/Desktop/emotions.csv")
+
+data.head()
+
+emotion={"POSITIVE":1,"NEGATIVE":-1,"NEUTRAL":0}
+data["label"]=[emotion[item] for item in data["label"]]
+
+#to check if data is balanced
+data["label"].value_counts()
+
+X=data.iloc[:,:2548]
+y=data.iloc[:,2548:2549]
+
+#PCA
+from sklearn.decomposition import PCA
+features=PCA(n_components=40)
+principal_components=features.fit_transform(X)
+
+Data=pd.DataFrame(data=principal_components,columns=["one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenety","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","t","v","w"])
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+logreg=LogisticRegression()
+train_train, train_test, y_train, y_test = train_test_split(Data, y, test_size=0.3, random_state=0)
+logreg.fit(train_train, y_train)
+
+y_pred=logreg.predict(train_test)
+y_pred=y_pred.tolist()
+y_test=y_test["label"].tolist()
+
+from sklearn.metrics import accuracy_score
+print(accuracy_score(y_test,y_pred))
+
+import seaborn as sn
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+cm=confusion_matrix(y_test,y_pred)
+conf_matrix=pd.DataFrame(data=cm,columns=['Predicted:Neg','Predicted:Pos', 'Predicted:Neu'],index=['Actual:-1','Actual:1','Actual:0'])
+plt.figure(figsize = (8,5))
+sn.heatmap(conf_matrix, annot=True,fmt='d',cmap="YlGnBu")
