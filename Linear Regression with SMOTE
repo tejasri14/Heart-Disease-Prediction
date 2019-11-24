@@ -1,0 +1,93 @@
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+scaler=MinMaxScaler()
+import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+import seaborn as sn
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+from sklearn.preprocessing import binarize
+
+data=pd.read_csv("C://Users/Tejasri/Desktop/drivendata-heart.csv")
+y=pd.read_csv("C://Users/Tejasri/Desktop/datadriven.csv")
+test=pd.read_csv("C://Users/Tejasri/Desktop/drivendata-test.csv")
+
+data=pd.concat([data,y],axis=1)
+
+id=test.iloc[:,[0]]
+
+#Data Preprocessing
+
+#converting float to int
+data["oldpeak_eq_st_depression"]=data["oldpeak_eq_st_depression"].astype("int")
+
+test["oldpeak_eq_st_depression"]=test["oldpeak_eq_st_depression"].astype("int")
+
+#greating dummy columns for "thal"
+data=pd.concat([data,pd.get_dummies(data["thal"])],axis=1)
+
+test=pd.concat([test,pd.get_dummies(test["thal"])],axis=1)
+
+#normalizing the values
+
+data[["resting_blood_pressure"]]=scaler.fit_transform(data[["resting_blood_pressure"]])
+
+test[["resting_blood_pressure"]]=scaler.fit_transform(test[["resting_blood_pressure"]])
+
+data[["serum_cholesterol_mg_per_dl"]]=scaler.fit_transform(data[["serum_cholesterol_mg_per_dl"]])
+
+test[["serum_cholesterol_mg_per_dl"]]=scaler.fit_transform(test[["serum_cholesterol_mg_per_dl"]])
+
+data[["age"]]=scaler.fit_transform(data[["age"]])
+
+test[["age"]]=scaler.fit_transform(test[["age"]])
+
+data[["max_heart_rate_achieved"]]=scaler.fit_transform(data[["max_heart_rate_achieved"]])
+
+test[["max_heart_rate_achieved"]]=scaler.fit_transform(test[["max_heart_rate_achieved"]])
+
+#removing patient id
+data.drop(data[["patient_id"]],axis=1,inplace=True)
+
+test.drop(test[["patient_id"]],axis=1,inplace=True)
+
+#removing thal
+data.drop(data[["thal"]],axis=1,inplace=True)
+
+test.drop(test[["thal"]],axis=1,inplace=True)
+
+#Feature Selection option1
+X = data.iloc[:,[0,1,2,3,4,5,6,7,8,9,10,11,12,14,15]]
+y=y.iloc[:,[1]]
+y.heart_disease_present.value_counts()
+
+X=X.as_matrix() #converting to numpy matrix
+y=y.as_matrix()  #converting to numpy matrix
+regressor_OLS = sm.OLS(endog = y, exog = X).fit()
+regressor_OLS.summary()
+
+#Features to be considered in the model
+X1=data.iloc[:,[2,3,7,9,10,11,14]]
+X1.head()
+X2=test.iloc[:,[2,3,7,9,10,11,14]]
+
+X_train, X_test, y_train, y_test = train_test_split(X1, y, test_size=0.3, random_state=0)
+
+#SVC Classifier
+svclassifier = SVC(kernel='linear',C=10)
+svclassifier.fit(X_train, y_train) 
+y_pred = svclassifier.predict(X2)
+
+y_pred=y_pred.astype("float64")
+Y=y_pred.reshape(-1,1)
+y=pd.DataFrame(Y)
+y.head()
+
+id.head()
+
+submission=pd.concat([id,y],axis=1)
+
+
