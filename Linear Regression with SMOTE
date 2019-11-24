@@ -90,4 +90,7 @@ id.head()
 
 submission=pd.concat([id,y],axis=1)
 
+submission.info()
+
+
 
